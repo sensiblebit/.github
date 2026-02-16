@@ -1,0 +1,49 @@
+name: Pre-commit Autoupdate
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  autoupdate:
+    name: Update hook versions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - run: pip install pre-commit
+
+      - name: Run autoupdate
+        run: pre-commit autoupdate
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet .pre-commit-config.yaml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create PR
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="build/pre-commit-autoupdate"
+          git checkout -b "$BRANCH"
+          git add .pre-commit-config.yaml
+          git commit -m "build(deps): update pre-commit hook versions"
+          git push -f origin "$BRANCH"
+          if ! gh pr list --head "$BRANCH" --json number --jq '.[0].number' | grep -q .; then
+            gh pr create \
+              --title "build(deps): update pre-commit hook versions" \
+              --body "Automated update of pre-commit hook versions via \`pre-commit autoupdate\`."
+          fi
