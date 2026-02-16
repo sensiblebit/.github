@@ -31,8 +31,10 @@ jobs:
 
       - name: Check formatting (prettier)
         id: prettier
+        shell: bash {0}
         run: |
-          npx prettier@latest --check ${{ inputs.prettier_paths }} ${{ inputs.prettier_exclude }}; rc=$?
+          npx prettier@latest --check ${{ inputs.prettier_paths }} ${{ inputs.prettier_exclude }}
+          rc=$?
           if [ $rc -eq 2 ]; then
             echo "::notice::No files matched prettier glob — skipping"
             exit 0
