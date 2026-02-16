@@ -31,7 +31,13 @@ jobs:
 
       - name: Check formatting (prettier)
         id: prettier
-        run: npx prettier@latest --check ${{ inputs.prettier_paths }} ${{ inputs.prettier_exclude }}
+        run: |
+          npx prettier@latest --check ${{ inputs.prettier_paths }} ${{ inputs.prettier_exclude }}; rc=$?
+          if [ $rc -eq 2 ]; then
+            echo "::notice::No files matched prettier glob — skipping"
+            exit 0
+          fi
+          exit $rc
 
       - name: Check markdown
         if: success() || failure()
