@@ -1,0 +1,80 @@
+name: Claude Code Review
+
+on:
+  workflow_call:
+    inputs:
+      review_workflow_path:
+        description: "Path to the caller workflow file (for skip detection)"
+        required: false
+        type: string
+        default: ".github/workflows/claude-code-review.yml"
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Check if review workflow was modified
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh -R ${{ github.repository }} pr diff ${{ github.event.pull_request.number }} --name-only | grep -qF '${{ inputs.review_workflow_path }}'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping Claude review — workflow file was modified (OAuth validation will fail)"
+          fi
+
+      - name: Minimize previous review comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh -R ${{ github.repository }} pr view ${{ github.event.pull_request.number }} \
+            --json comments \
+            --jq '.comments[] | select(.author.login == "claude" or .author.login == "github-actions") | .id' \
+          | while read -r node_id; do
+            gh api graphql -f query='
+              mutation {
+                minimizeComment(input: {subjectId: "'"$node_id"'", classifier: OUTDATED}) {
+                  minimizedComment { isMinimized }
+                }
+              }'
+          done
+
+      - name: Post skip comment
+        if: steps.check.outputs.skip == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh -R ${{ github.repository }} pr comment ${{ github.event.pull_request.number }} \
+            --body "## Code review
+
+          Skipped — this PR modifies the review workflow. The OAuth token exchange requires the workflow file to match the default branch, so the review cannot run until this change is merged."
+
+      - name: Checkout repository
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        if: steps.check.outputs.skip != 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
+          plugins: 'code-review@claude-code-plugins'
+          prompt: |
+            /code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+
+            IMPORTANT: You MUST always post a PR comment, even if no issues are found.
+            Do NOT skip the review for any reason — never treat a PR as "trivial" or
+            "obviously correct." Always run the full review pipeline and post a comment
+            with the results. If no issues are found, post the "No issues found" summary.
