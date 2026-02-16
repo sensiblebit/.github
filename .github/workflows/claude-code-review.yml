@@ -54,9 +54,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh -R ${{ github.repository }} pr comment ${{ github.event.pull_request.number }} \
-            --body "## Code review
+            --body "## Claude code review
 
-          Skipped — this PR modifies the review workflow. The OAuth token exchange requires the workflow file to match the default branch, so the review cannot run until this change is merged."
+          Skipped — this PR modifies the review workflow. The Claude OAuth token exchange requires the workflow file to match the default branch, so the Claude review cannot run until this change is merged."
 
       - name: Checkout repository
         if: steps.check.outputs.skip != 'true'
