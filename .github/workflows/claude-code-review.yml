@@ -38,7 +38,7 @@ jobs:
         run: |
           gh -R ${{ github.repository }} pr view ${{ github.event.pull_request.number }} \
             --json comments \
-            --jq '.comments[] | select(.author.login == "claude" or .author.login == "github-actions") | .id' \
+            --jq '.comments[] | select((.author.login == "claude") or (.author.login == "github-actions" and (.body | startswith("## Claude code review")))) | .id' \
           | while read -r node_id; do
             gh api graphql -f query='
               mutation {
@@ -52,11 +52,11 @@ jobs:
         if: steps.check.outputs.skip == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh -R ${{ github.repository }} pr comment ${{ github.event.pull_request.number }} \
-            --body "## Claude code review
+          BODY: |
+            ## Claude code review
 
-          Skipped — this PR modifies the review workflow. The Claude OAuth token exchange requires the workflow file to match the default branch, so the Claude review cannot run until this change is merged."
+            Skipped — this PR modifies the review workflow. The Claude OAuth token exchange requires the workflow file to match the default branch, so the Claude review cannot run until this change is merged.
+        run: gh -R ${{ github.repository }} pr comment ${{ github.event.pull_request.number }} --body "$BODY"
 
       - name: Checkout repository
         if: steps.check.outputs.skip != 'true'
