@@ -9,6 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          repository: sensiblebit/.github
+          path: .sensiblebit-checks
       - uses: actions/setup-go@v6
         with:
           go-version: stable
@@ -21,16 +25,7 @@ jobs:
         run: go vet ./...
       - name: Check goimports
         if: success() || failure()
-        run: |
-          go install golang.org/x/tools/cmd/goimports@latest
-          bad=$(goimports -l .)
-          if [ -n "$bad" ]; then
-            echo "::error::The following files have incorrect imports:"
-            echo "$bad"
-            echo ""
-            echo "Run: goimports -w ."
-            exit 1
-          fi
+        run: python3 .sensiblebit-checks/scripts/checks.py goimports
 
   go-test:
     name: Go Test

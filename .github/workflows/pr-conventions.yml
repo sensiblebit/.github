@@ -19,13 +19,6 @@ on:
           ci
           chore
           revert
-      exempt_branch_prefixes:
-        description: "Newline-separated list of exempt branch prefixes (e.g. dependabot, release)"
-        required: false
-        type: string
-        default: |
-          dependabot/
-          release/
 
 jobs:
   pr-title:
@@ -48,76 +41,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/checkout@v6
+        with:
+          repository: sensiblebit/.github
+          path: .sensiblebit-checks
+
       - name: Check branch name
-        run: |
-          branch="${{ github.head_ref }}"
-          types=$(echo '${{ inputs.types }}' | tr '\n' '|' | sed 's/|$//')
-          exempt=$(echo '${{ inputs.exempt_branch_prefixes }}' | tr '\n' '|' | sed 's/|$//')
-
-          if echo "$branch" | grep -qE "^($exempt)"; then
-            echo "Branch '$branch' is exempt."
-            exit 0
-          fi
-
-          if echo "$branch" | grep -qE "^($types)/"; then
-            echo "Branch '$branch' follows convention."
-            exit 0
-          fi
-
-          echo "::error::Branch '$branch' does not follow type/description convention."
-          echo "Valid types: $(echo '${{ inputs.types }}' | tr '\n' ', ' | sed 's/, $//')"
-          echo "Examples: feat/export-csv, fix/nil-panic, ci/add-govulncheck"
-          exit 1
+        run: python3 .sensiblebit-checks/scripts/checks.py branch-name "${{ github.head_ref }}"
 
       - name: Check commit messages
         if: success() || failure()
-        run: |
-          types=$(echo '${{ inputs.types }}' | tr '\n' '|' | sed 's/|$//')
-          pattern="^($types)(\(.+\))?: .+"
-          failed=false
-
-          for sha in $(git rev-list "origin/${{ github.base_ref }}..HEAD"); do
-            subject=$(git log --format=%s -n1 "$sha")
-            if echo "$subject" | grep -qE "^Merge"; then
-              continue
-            fi
-            if ! echo "$subject" | grep -qE "$pattern"; then
-              echo "::error::Invalid commit message: $subject (commit: ${sha:0:7})"
-              echo "  Expected: type: description  or  type(scope): description"
-              failed=true
-            fi
-          done
-
-          if [ "$failed" = true ]; then
-            echo ""
-            echo "Valid types: $(echo '${{ inputs.types }}' | tr '\n' ', ' | sed 's/, $//')"
-            exit 1
-          fi
-          echo "All commit messages follow Conventional Commits format."
+        run: python3 .sensiblebit-checks/scripts/checks.py commit-message --ci --base-ref "origin/${{ github.base_ref }}"
 
       - name: Check commits are verified
         if: success() || failure()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          failed=false
-          commits=$(gh api --paginate "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits")
-
-          for row in $(echo "$commits" | jq -r '.[] | @base64'); do
-            sha=$(echo "$row" | base64 -d | jq -r '.sha[:7]')
-            verified=$(echo "$row" | base64 -d | jq -r '.commit.verification.verified')
-            subject=$(echo "$row" | base64 -d | jq -r '.commit.message | split("\n")[0]')
-
-            if [ "$verified" != "true" ]; then
-              echo "::error::Unverified commit: $sha $subject"
-              failed=true
-            fi
-          done
-
-          if [ "$failed" = true ]; then
-            echo ""
-            echo "All commits must be signed."
-            echo "See: https://docs.github.com/en/authentication/managing-commit-signature-verification"
-            exit 1
-          fi
-          echo "All commits are verified."
+        run: python3 .sensiblebit-checks/scripts/checks.py verified-commits "${{ github.repository }}" "${{ github.event.pull_request.number }}"
