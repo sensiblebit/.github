@@ -17,6 +17,13 @@
   language: script
   types: [go]
 
+- id: wasm
+  name: wasm
+  entry: scripts/checks.py wasm
+  language: script
+  types: [go]
+  pass_filenames: false
+
 - id: verified-commits
   name: verified commits
   entry: scripts/checks.py verified-commits

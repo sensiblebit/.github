@@ -180,17 +180,24 @@ def cmd_goimports(args):
 
 def cmd_wasm(args):
     """Verify WASM target compiles cleanly (vet + build)."""
+    path = args.path
+    if not path:
+        if not os.path.isdir("./cmd/wasm"):
+            print("No WASM path provided and ./cmd/wasm not found, skipping.")
+            return
+        path = "./cmd/wasm/"
+
     require_tool("go")
 
     env = {**os.environ, "GOOS": "js", "GOARCH": "wasm"}
 
-    print("Running go vet (WASM)...")
-    result = run(["go", "vet", "./cmd/wasm/"], env=env)
+    print(f"Running go vet (WASM) on {path}...")
+    result = run(["go", "vet", path], env=env)
     if result.returncode != 0:
         sys.exit(result.returncode)
 
-    print("Running go build (WASM)...")
-    result = run(["go", "build", "-o", "/dev/null", "./cmd/wasm/"], env=env)
+    print(f"Running go build (WASM) on {path}...")
+    result = run(["go", "build", "-o", "/dev/null", path], env=env)
     if result.returncode != 0:
         sys.exit(result.returncode)
 
@@ -256,7 +263,8 @@ def main():
     p.add_argument("files", nargs="*", help="Specific files to fix.")
 
     # wasm
-    sub.add_parser("wasm", help="Verify WASM target compiles.")
+    p = sub.add_parser("wasm", help="Verify WASM target compiles.")
+    p.add_argument("path", nargs="?", help="Path to WASM package (default: ./cmd/wasm/).")
 
     # verified-commits
     p = sub.add_parser("verified-commits", help="Check PR commits are signed.")
