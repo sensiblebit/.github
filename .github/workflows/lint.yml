@@ -1,0 +1,38 @@
+name: Lint
+
+on:
+  workflow_call:
+    inputs:
+      prettier_paths:
+        description: "Glob pattern(s) for prettier (space-separated)"
+        required: false
+        type: string
+        default: "**/*.{js,ts,css,html}"
+      prettier_exclude:
+        description: "Glob pattern(s) to exclude from prettier (space-separated, prefixed with !)"
+        required: false
+        type: string
+      markdownlint_config:
+        description: "Path to markdownlint config file"
+        required: false
+        type: string
+        default: ".markdownlint.yaml"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Check formatting (prettier)
+        id: prettier
+        run: npx prettier@latest --check ${{ inputs.prettier_paths }} ${{ inputs.prettier_exclude }}
+
+      - name: Check markdown
+        if: success() || failure()
+        run: npx markdownlint-cli@latest --config ${{ inputs.markdownlint_config }} '**/*.md'
