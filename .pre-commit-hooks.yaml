@@ -1,25 +1,25 @@
 - id: branch-name
   name: branch name
-  entry: python3 scripts/checks.py branch-name
-  language: python
+  entry: scripts/checks.py branch-name
+  language: script
   always_run: true
   pass_filenames: false
 
 - id: commit-message
   name: commit message
-  entry: python3 scripts/checks.py commit-message
-  language: python
+  entry: scripts/checks.py commit-message
+  language: script
   stages: [commit-msg]
 
 - id: goimports
   name: goimports
-  entry: python3 scripts/checks.py goimports --fix
-  language: python
+  entry: scripts/checks.py goimports --fix
+  language: script
   types: [go]
 
 - id: verified-commits
   name: verified commits
-  entry: python3 scripts/checks.py verified-commits
-  language: python
+  entry: scripts/checks.py verified-commits
+  language: script
   always_run: true
   pass_filenames: false
