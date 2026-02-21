@@ -37,12 +37,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           BRANCH="build/pre-commit-autoupdate"
           git checkout -b "$BRANCH"
           git add .pre-commit-config.yaml
           git commit -m "build(deps): update pre-commit hook versions"
           git push -f origin "$BRANCH"
-          if ! gh pr list --head "$BRANCH" --json number --jq '.[0].number' | grep -q .; then
+          if \! gh pr list --head "$BRANCH" --json number --jq '.[0].number' | grep -q .; then
             gh pr create \
               --title "build(deps): update pre-commit hook versions" \
               --body "Automated update of pre-commit hook versions via \`pre-commit autoupdate\`."
