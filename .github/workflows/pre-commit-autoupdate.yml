@@ -44,7 +44,8 @@ jobs:
           git add .pre-commit-config.yaml
           git commit -m "build(deps): update pre-commit hook versions"
           git push -f origin "$BRANCH"
-          if \! gh pr list --head "$BRANCH" --json number --jq '.[0].number' | grep -q .; then
+          EXISTING=$(gh pr list --head "$BRANCH" --json number --jq "length")
+          if [ "$EXISTING" = "0" ]; then
             gh pr create \
               --title "build(deps): update pre-commit hook versions" \
               --body "Automated update of pre-commit hook versions via \`pre-commit autoupdate\`."
