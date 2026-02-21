@@ -6,6 +6,7 @@ Usage:
     checks.py commit-message <file>
     checks.py commit-message --ci [<base-ref>]
     checks.py goimports [--fix] [<files>...]
+    checks.py golangci-lint
     checks.py wasm
     checks.py verified-commits <repo> <pr-number>
 """
@@ -175,6 +176,18 @@ def cmd_goimports(args):
             sys.exit(1)
 
 
+# ── golangci-lint ────────────────────────────────────────
+
+
+def cmd_golangci_lint(args):
+    """Run golangci-lint on the module."""
+    require_tool("golangci-lint")
+
+    result = run(["golangci-lint", "run"])
+    if result.returncode != 0:
+        sys.exit(result.returncode)
+
+
 # ── wasm ─────────────────────────────────────────────────
 
 
@@ -262,6 +275,9 @@ def main():
     p.add_argument("--fix", action="store_true", help="Fix files in place.")
     p.add_argument("files", nargs="*", help="Specific files to fix.")
 
+    # golangci-lint
+    sub.add_parser("golangci-lint", help="Run golangci-lint.")
+
     # wasm
     p = sub.add_parser("wasm", help="Verify WASM target compiles.")
     p.add_argument("path", nargs="?", help="Path to WASM package (default: ./cmd/wasm/).")
@@ -277,6 +293,7 @@ def main():
         "branch-name": cmd_branch_name,
         "commit-message": cmd_commit_message,
         "goimports": cmd_goimports,
+        "golangci-lint": cmd_golangci_lint,
         "wasm": cmd_wasm,
         "verified-commits": cmd_verified_commits,
     }

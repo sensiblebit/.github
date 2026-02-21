@@ -38,6 +38,13 @@
   types: [go]
   pass_filenames: false
 
+- id: golangci-lint
+  name: golangci-lint
+  entry: scripts/checks.py golangci-lint
+  language: script
+  types: [go]
+  pass_filenames: false
+
 - id: go-build
   name: go build
   entry: go build ./...
@@ -48,13 +55,6 @@
 - id: go-test
   name: go test
   entry: go test ./...
-  language: system
-  types: [go]
-  pass_filenames: false
-
-- id: golangci-lint
-  name: golangci-lint
-  entry: golangci-lint run
   language: system
   types: [go]
   pass_filenames: false
