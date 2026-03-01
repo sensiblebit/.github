@@ -59,6 +59,69 @@
   types: [go]
   pass_filenames: false
 
+- id: govulncheck
+  name: govulncheck
+  entry: govulncheck
+  language: golang
+  args: ["./..."]
+  additional_dependencies:
+    - golang.org/x/vuln/cmd/govulncheck@v1.1.4
+  files: (^go\.mod$|^go\.sum$|\.go$)
+  pass_filenames: false
+
+- id: gendocs
+  name: gendocs
+  entry: bash -c 'go generate ./... && git diff --exit-code README.md'
+  language: system
+  files: (^cmd/certkit/.*\.go$|^README\.md$|^doc\.go$)
+  pass_filenames: false
+
+- id: go-mod-update
+  name: go mod update
+  entry: bash -c 'go get -u ./... && go mod tidy'
+  language: system
+  files: \.go$
+  pass_filenames: false
+  stages: [manual]
+
+- id: npm-update
+  name: npm update
+  entry: bash -c 'cd web && npm update'
+  language: system
+  files: ^web/
+  pass_filenames: false
+  stages: [manual]
+
+- id: prettier
+  name: prettier
+  entry: prettier --write
+  language: node
+  additional_dependencies:
+    - prettier@latest
+  types_or: [javascript, ts, css, html]
+  exclude: wasm_exec\.js$
+
+- id: vitest
+  name: vitest
+  entry: bash -c 'cd web && vitest run'
+  language: node
+  additional_dependencies:
+    - vitest@^3.0.0
+    - jsdom@^26.0.0
+  files: ^web/
+  exclude: wasm_exec\.js$
+  pass_filenames: false
+
+- id: wrangler-build
+  name: wrangler build
+  entry: bash -c 'cd web && wrangler pages functions build --outdir /tmp/certkit-fn-check'
+  language: node
+  additional_dependencies:
+    - wrangler@latest
+  files: ^web/functions/
+  types: [ts]
+  pass_filenames: false
+
 - id: verified-commits
   name: verified commits
   entry: scripts/checks.py verified-commits
