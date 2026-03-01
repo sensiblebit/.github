@@ -61,11 +61,8 @@
 
 - id: govulncheck
   name: govulncheck
-  entry: govulncheck
-  language: golang
-  args: ["./..."]
-  additional_dependencies:
-    - golang.org/x/vuln/cmd/govulncheck@v1.1.4
+  entry: scripts/checks.py govulncheck
+  language: script
   files: (^go\.mod$|^go\.sum$|\.go$)
   pass_filenames: false
 

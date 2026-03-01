@@ -6,6 +6,7 @@ Usage:
     checks.py commit-message <file>
     checks.py commit-message --ci [<base-ref>]
     checks.py goimports [--fix] [<files>...]
+    checks.py govulncheck
     checks.py golangci-lint
     checks.py wasm
     checks.py verified-commits <repo> <pr-number>
@@ -20,8 +21,17 @@ import subprocess
 import sys
 
 VALID_TYPES = [
-    "feat", "fix", "docs", "style", "refactor",
-    "perf", "test", "build", "ci", "chore", "revert",
+    "feat",
+    "fix",
+    "docs",
+    "style",
+    "refactor",
+    "perf",
+    "test",
+    "build",
+    "ci",
+    "chore",
+    "revert",
 ]
 TYPES_PATTERN = "|".join(VALID_TYPES)
 TYPES_LIST = ", ".join(VALID_TYPES)
@@ -176,6 +186,32 @@ def cmd_goimports(args):
             sys.exit(1)
 
 
+# ── govulncheck ──────────────────────────────────────────
+
+
+def cmd_govulncheck(args):
+    """Run govulncheck with an auto-install if missing."""
+    require_tool("go")
+
+    result = run(["go", "env", "GOPATH"], capture=True)
+    if result.returncode != 0:
+        fail("Could not determine GOPATH.")
+
+    gopath = result.stdout.strip()
+    os.environ["PATH"] = f"{gopath}/bin:{os.environ.get('PATH', '')}"
+
+    if shutil.which("govulncheck") is None:
+        print("Installing govulncheck...")
+        run(
+            ["go", "install", "golang.org/x/vuln/cmd/govulncheck@v1.1.4"],
+            check=True,
+        )
+
+    result = run(["govulncheck", "./..."])
+    if result.returncode != 0:
+        sys.exit(result.returncode)
+
+
 # ── golangci-lint ────────────────────────────────────────
 
 
@@ -224,7 +260,9 @@ def cmd_verified_commits(args):
 
     result = run(
         [
-            "gh", "api", "--paginate",
+            "gh",
+            "api",
+            "--paginate",
             f"repos/{args.repo}/pulls/{args.pr}/commits",
         ],
         capture=True,
@@ -247,7 +285,9 @@ def cmd_verified_commits(args):
     if failed:
         print()
         print("All commits must be signed.")
-        print("See: https://docs.github.com/en/authentication/managing-commit-signature-verification")
+        print(
+            "See: https://docs.github.com/en/authentication/managing-commit-signature-verification"
+        )
         sys.exit(1)
 
     print("All commits are verified.")
@@ -278,9 +318,14 @@ def main():
     # golangci-lint
     sub.add_parser("golangci-lint", help="Run golangci-lint.")
 
+    # govulncheck
+    sub.add_parser("govulncheck", help="Run govulncheck.")
+
     # wasm
     p = sub.add_parser("wasm", help="Verify WASM target compiles.")
-    p.add_argument("path", nargs="?", help="Path to WASM package (default: ./cmd/wasm/).")
+    p.add_argument(
+        "path", nargs="?", help="Path to WASM package (default: ./cmd/wasm/)."
+    )
 
     # verified-commits
     p = sub.add_parser("verified-commits", help="Check PR commits are signed.")
@@ -293,6 +338,7 @@ def main():
         "branch-name": cmd_branch_name,
         "commit-message": cmd_commit_message,
         "goimports": cmd_goimports,
+        "govulncheck": cmd_govulncheck,
         "golangci-lint": cmd_golangci_lint,
         "wasm": cmd_wasm,
         "verified-commits": cmd_verified_commits,
