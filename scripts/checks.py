@@ -39,6 +39,7 @@ TYPES_LIST = ", ".join(VALID_TYPES)
 COMMIT_RE = re.compile(rf"^({TYPES_PATTERN})(\(.+\))?: .+")
 BRANCH_RE = re.compile(rf"^({TYPES_PATTERN})/")
 EXEMPT_RE = re.compile(r"^(dependabot|release)/")
+EXEMPT_EXACT = {"develop"}
 
 
 def run(cmd, *, capture=False, **kwargs):
@@ -81,6 +82,9 @@ def cmd_branch_name(args):
         branch = result.stdout.strip()
 
     if EXEMPT_RE.match(branch):
+        return
+
+    if branch in EXEMPT_EXACT:
         return
 
     if BRANCH_RE.match(branch):
