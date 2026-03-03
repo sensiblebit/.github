@@ -223,6 +223,10 @@ def cmd_golangci_lint(args):
     """Run golangci-lint on the module."""
     require_tool("golangci-lint")
 
+    result = run(["golangci-lint", "cache", "clean"])
+    if result.returncode != 0:
+        sys.exit(result.returncode)
+
     result = run(["golangci-lint", "run"])
     if result.returncode != 0:
         sys.exit(result.returncode)
