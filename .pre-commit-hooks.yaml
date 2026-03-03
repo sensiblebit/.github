@@ -98,6 +98,14 @@
   types_or: [javascript, ts, css, html]
   exclude: wasm_exec\.js$
 
+- id: markdownlint
+  name: markdownlint
+  entry: markdownlint
+  language: node
+  additional_dependencies:
+    - markdownlint-cli@0.47.0
+  types: [markdown]
+
 - id: vitest
   name: vitest
   entry: bash -c 'cd web && vitest run'
