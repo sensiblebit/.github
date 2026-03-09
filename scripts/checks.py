@@ -5,6 +5,7 @@ Usage:
     checks.py branch-name [<name>]
     checks.py commit-message <file>
     checks.py commit-message --ci [<base-ref>]
+    checks.py actionlint
     checks.py goimports [--fix] [<files>...]
     checks.py govulncheck
     checks.py golangci-lint
@@ -219,6 +220,29 @@ def cmd_govulncheck(args):
 # ── golangci-lint ────────────────────────────────────────
 
 
+def cmd_actionlint(args):
+    """Run actionlint with an auto-install if missing."""
+    require_tool("go")
+
+    result = run(["go", "env", "GOPATH"], capture=True)
+    if result.returncode != 0:
+        fail("Could not determine GOPATH.")
+
+    gopath = result.stdout.strip()
+    os.environ["PATH"] = f"{gopath}/bin:{os.environ.get('PATH', '')}"
+
+    if shutil.which("actionlint") is None:
+        print("Installing actionlint...")
+        run(
+            ["go", "install", "github.com/rhysd/actionlint/cmd/actionlint@v1.7.11"],
+            check=True,
+        )
+
+    result = run(["actionlint"])
+    if result.returncode != 0:
+        sys.exit(result.returncode)
+
+
 def cmd_golangci_lint(args):
     """Run golangci-lint on the module."""
     require_tool("golangci-lint")
@@ -318,6 +342,9 @@ def main():
     p.add_argument("--ci", action="store_true", help="CI mode: check all PR commits.")
     p.add_argument("--base-ref", help="Base ref for CI mode (default: origin/main).")
 
+    # actionlint
+    sub.add_parser("actionlint", help="Run actionlint.")
+
     # goimports
     p = sub.add_parser("goimports", help="Check or fix Go import ordering.")
     p.add_argument("--fix", action="store_true", help="Fix files in place.")
@@ -345,6 +372,7 @@ def main():
     commands = {
         "branch-name": cmd_branch_name,
         "commit-message": cmd_commit_message,
+        "actionlint": cmd_actionlint,
         "goimports": cmd_goimports,
         "govulncheck": cmd_govulncheck,
         "golangci-lint": cmd_golangci_lint,

@@ -108,10 +108,8 @@
 
 - id: actionlint
   name: actionlint
-  entry: actionlint
-  language: golang
-  additional_dependencies:
-    - github.com/rhysd/actionlint/cmd/actionlint@v1.7.11
+  entry: scripts/checks.py actionlint
+  language: script
   files: ^\.github/workflows/.*\.ya?ml$
 
 - id: vitest
