@@ -18,7 +18,7 @@ repos:
     hooks:
       - id: python-compile
         name: python compile
-        entry: python3 -m py_compile scripts/checks.py
+        entry: python3 -B -m py_compile scripts/checks.py
         language: system
         files: ^scripts/.*\.py$
         pass_filenames: false
