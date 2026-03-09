@@ -111,6 +111,7 @@
   entry: scripts/checks.py actionlint
   language: script
   files: ^\.github/workflows/.*\.ya?ml$
+  pass_filenames: false
 
 - id: vitest
   name: vitest
