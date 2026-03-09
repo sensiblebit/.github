@@ -18,7 +18,7 @@ repos:
     hooks:
       - id: python-compile
         name: python compile
-        entry: python3 -B -m py_compile scripts/checks.py
+        entry: bash -c 'tmp=$(mktemp); python3 -c '"'"'import py_compile, sys; py_compile.compile("scripts/checks.py", cfile=sys.argv[1], doraise=True)'"'"' "$tmp"; rm -f "$tmp"'
         language: system
         files: ^scripts/.*\.py$
         pass_filenames: false
