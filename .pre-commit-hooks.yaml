@@ -106,6 +106,14 @@
     - markdownlint-cli@0.47.0
   types: [markdown]
 
+- id: actionlint
+  name: actionlint
+  entry: actionlint
+  language: golang
+  additional_dependencies:
+    - github.com/rhysd/actionlint/cmd/actionlint@v1.7.11
+  files: ^\.github/workflows/.*\.ya?ml$
+
 - id: vitest
   name: vitest
   entry: bash -c 'cd web && vitest run'
