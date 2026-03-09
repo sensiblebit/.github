@@ -47,7 +47,9 @@ jobs:
           path: .sensiblebit-checks
 
       - name: Check branch name
-        run: python3 .sensiblebit-checks/scripts/checks.py branch-name "${{ github.head_ref }}"
+        env:
+          PR_HEAD_REF: ${{ github.head_ref }}
+        run: python3 .sensiblebit-checks/scripts/checks.py branch-name "$PR_HEAD_REF"
 
       - name: Check commit messages
         if: success() || failure()

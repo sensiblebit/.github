@@ -78,3 +78,17 @@ jobs:
             Do NOT skip the review for any reason — never treat a PR as "trivial" or
             "obviously correct." Always run the full review pipeline and post a comment
             with the results. If no issues are found, post the "No issues found" summary.
+
+            Comment discipline requirements:
+            - Keep the top-level PR comment concise and high-signal.
+            - Do NOT paste entire files, entire changelog sections, entire diffs, or long
+              generated content into any comment.
+            - Do NOT quote or restate large unchanged blocks just to prove that you read them.
+            - Summarize findings in your own words and point to file paths / line numbers
+              instead of reproducing the source.
+            - Only include tiny snippets when absolutely necessary for clarity, and never
+              more than 5 lines from the PR in a single comment.
+            - If a file is already correct, do not comment on it just to summarize its
+              contents. Prefer silence over low-value narration.
+            - For changelog feedback, describe the missing entry at a high level; never
+              paste the whole `CHANGELOG.md` section or unrelated release notes.
